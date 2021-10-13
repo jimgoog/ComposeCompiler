@@ -1,0 +1,28 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        google()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:4.2.0'
+    }
+}
+
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.6.0-M1'
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+repositories {
+    maven { url("/Users/jsproch/kotlin-teams/mavenout") }
+    google()
+    mavenCentral()
+}
+
+compileTestKotlin {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}

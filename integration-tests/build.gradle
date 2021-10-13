@@ -1,0 +1,68 @@
+
+import javax.tools.ToolProvider
+
+plugins {
+    id("kotlin-android")
+    id("com.android.library")
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+repositories {
+    maven { url("/Users/jsproch/kotlin-teams/mavenout") }
+    google()
+    mavenCentral()
+}
+
+android {
+        compileSdkVersion 31
+        buildToolsVersion '27.0.3'
+        defaultConfig {
+            minSdkVersion 21
+            targetSdkVersion 31
+            versionCode 1
+            versionName "1.0"
+            testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        }
+        buildTypes {
+            release {
+                minifyEnabled false
+                proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            }
+        }
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+        }
+    }
+}
+
+dependencies {
+    testImplementation("junit:junit:4.12")
+    testImplementation("org.robolectric:robolectric:4.6.1")
+
+    testCompileOnly("org.jetbrains.kotlin:kotlin-compiler")
+    testRuntimeOnly(project(":unpackaged"))
+    testImplementation("org.jetbrains.kotlin:kotlin-compiler")
+
+    // tools.jar required for com.sun.jdi
+    def toolsJar
+    if (JavaVersion.current().getMajorVersion() == "8") {
+        toolsJar = ((URLClassLoader) ToolProvider.getSystemToolClassLoader()).getURLs()
+    } else if (System.env.JAVA_TOOLS_JAR != null) {
+        toolsJar = System.env.JAVA_TOOLS_JAR
+    } else {
+        throw new Exception("If you are not using Java 8, JAVA_TOOLS_JAR env variable " +
+                "needs to be set to tools.jar from a Java 8 installation to build Doclava")
+    }
+    testImplementation(files(toolsJar))
+
+    testImplementation("org.jetbrains.kotlin:kotlin-stdlib")
+    testImplementation(project(":unpackaged"))
+    testImplementation("androidx.compose.material:material:1.1.0-alpha05")
+    testImplementation("androidx.compose.runtime:runtime:1.1.0-alpha05")
+    testImplementation("androidx.compose.ui:ui:1.1.0-alpha05")
+    testImplementation("androidx.core:core-ktx:1.1.0")
+    testImplementation("androidx.activity:activity-ktx:1.2.0")
+}

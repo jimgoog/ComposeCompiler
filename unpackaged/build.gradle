@@ -1,0 +1,30 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm'
+}
+
+group 'androidx.compose.compiler'
+version '1.0-SNAPSHOT'
+
+repositories {
+    maven { url("/Users/jsproch/kotlin-teams/mavenout") }
+    google()
+    mavenCentral()
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib"
+    implementation "org.jetbrains.kotlin:kotlin-compiler"
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+    kotlinOptions {
+        freeCompilerArgs += [
+                '-Xopt-in=kotlin.RequiresOptIn',
+        ]
+    }
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}

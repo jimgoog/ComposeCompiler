@@ -1,0 +1,15 @@
+pluginManagement {
+    repositories {
+        repositories {
+            maven { url("/Users/jsproch/kotlin-teams/mavenout") }
+            mavenCentral()
+            maven { url("https://plugins.gradle.org/m2/") }
+            google()
+        }
+    }
+}
+
+rootProject.name = 'ComposeCompiler'
+include 'repackaged'
+include 'unpackaged'
+include 'integration-tests'
