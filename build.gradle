@@ -9,7 +9,7 @@ buildscript {
 }
 
 plugins {
-    id 'org.jetbrains.kotlin.jvm' version '1.6.0-M1'
+    id 'org.jetbrains.kotlin.jvm' version '1.5.31'
 }
 
 group 'org.example'
@@ -17,6 +17,7 @@ version '1.0-SNAPSHOT'
 
 repositories {
     maven { url("/Users/jsproch/kotlin-teams/mavenout") }
+    maven { url("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap/") }
     google()
     mavenCentral()
 }

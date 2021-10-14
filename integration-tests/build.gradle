@@ -2,8 +2,8 @@
 import javax.tools.ToolProvider
 
 plugins {
-    id("kotlin-android")
     id("com.android.library")
+    id("kotlin-android")
 }
 
 group 'org.example'
@@ -11,6 +11,7 @@ version '1.0-SNAPSHOT'
 
 repositories {
     maven { url("/Users/jsproch/kotlin-teams/mavenout") }
+    maven { url("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap/") }
     google()
     mavenCentral()
 }

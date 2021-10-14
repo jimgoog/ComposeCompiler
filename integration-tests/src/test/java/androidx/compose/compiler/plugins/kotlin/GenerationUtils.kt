@@ -81,7 +81,6 @@ object GenerationUtils {
         ).codegenFactory(
             if (configuration.getBoolean(JVMConfigurationKeys.IR))
                 JvmIrCodegenFactory(
-                    configuration,
                     configuration.get(CLIConfigurationKeys.PHASE_CONFIG)
                         ?: PhaseConfig(jvmPhases)
                 )

@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrFunctionExpression
 import org.jetbrains.kotlin.ir.expressions.IrTypeOperator
 import org.jetbrains.kotlin.ir.expressions.IrTypeOperatorCall
-import org.jetbrains.kotlin.ir.types.IrTypeSystemContextImpl
 import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.util.isLambda
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
@@ -70,7 +69,7 @@ class ComposableFunInterfaceLowering(private val context: IrPluginContext) :
                 currentDeclarationParent!!,
                 context,
                 currentScope!!.scope.scopeOwnerSymbol,
-                IrTypeSystemContextImpl(context.irBuiltIns)
+                context.irBuiltIns
             ).build()
         }
         return super.visitTypeOperator(expression)

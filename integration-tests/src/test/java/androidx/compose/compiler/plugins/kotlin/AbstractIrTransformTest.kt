@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.backend.common.extensions.IrPluginContextImpl
 import org.jetbrains.kotlin.backend.common.ir.BuiltinSymbolsBase
 import org.jetbrains.kotlin.backend.common.ir.createParameterDeclarations
 import org.jetbrains.kotlin.backend.jvm.JvmGeneratorExtensionsImpl
-import org.jetbrains.kotlin.backend.jvm.JvmIrTypeSystemContext
 import org.jetbrains.kotlin.backend.jvm.JvmNameProvider
 import org.jetbrains.kotlin.backend.jvm.serialization.JvmIdSignatureDescriptor
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
@@ -36,16 +35,17 @@ import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.konan.DeserializedKlibModuleOrigin
 import org.jetbrains.kotlin.descriptors.konan.KlibModuleOrigin
-import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.IrElement
-import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmDescriptorMangler
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmIrLinker
+import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmManglerDesc
 import org.jetbrains.kotlin.ir.builders.TranslationPluginContext
 import org.jetbrains.kotlin.ir.builders.declarations.buildClass
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
+import org.jetbrains.kotlin.ir.descriptors.IrBuiltIns
+import org.jetbrains.kotlin.ir.descriptors.IrFunctionFactory
 import org.jetbrains.kotlin.ir.util.ExternalDependenciesGenerator
 import org.jetbrains.kotlin.ir.util.IrMessageLogger
 import org.jetbrains.kotlin.ir.util.ReferenceSymbolTable
@@ -380,7 +380,7 @@ abstract class AbstractIrTransformTest : AbstractCodegenTest() {
                 myTestRootDisposable, configuration, EnvironmentConfigFiles.JVM_CONFIG_FILES
             ).also { setupEnvironment(it) }
 
-            val mangler = JvmDescriptorMangler(null)
+            val mangler = JvmManglerDesc(null)
 
             val psi2ir = Psi2IrTranslator(
                 environment.configuration.languageVersionSettings,
@@ -399,7 +399,7 @@ abstract class AbstractIrTransformTest : AbstractCodegenTest() {
                 analysisResult.throwIfError()
                 AnalyzingUtils.throwExceptionOnErrors(analysisResult.bindingContext)
             }
-            val extensions = JvmGeneratorExtensionsImpl(configuration)
+            val extensions = JvmGeneratorExtensionsImpl()
             val generatorContext = psi2ir.createGeneratorContext(
                 analysisResult.moduleDescriptor,
                 analysisResult.bindingContext,
@@ -409,8 +409,12 @@ abstract class AbstractIrTransformTest : AbstractCodegenTest() {
             val stubGenerator = DeclarationStubGeneratorImpl(
                 generatorContext.moduleDescriptor,
                 generatorContext.symbolTable,
-                generatorContext.irBuiltIns,
+                generatorContext.irBuiltIns.languageVersionSettings,
                 extensions
+            )
+            val functionFactory = IrFunctionFactory(
+                generatorContext.irBuiltIns,
+                generatorContext.symbolTable
             )
             val frontEndContext = object : TranslationPluginContext {
                 override val moduleDescriptor: ModuleDescriptor
@@ -422,11 +426,13 @@ abstract class AbstractIrTransformTest : AbstractCodegenTest() {
                 override val irBuiltIns: IrBuiltIns
                     get() = generatorContext.irBuiltIns
             }
+            generatorContext.irBuiltIns.functionFactory = functionFactory
             val irLinker = JvmIrLinker(
                 generatorContext.moduleDescriptor,
                 messageLogger,
-                JvmIrTypeSystemContext(generatorContext.irBuiltIns),
+                generatorContext.irBuiltIns,
                 generatorContext.symbolTable,
+                functionFactory,
                 frontEndContext,
                 stubGenerator,
                 mangler
@@ -442,7 +448,8 @@ abstract class AbstractIrTransformTest : AbstractCodegenTest() {
 
             val symbols = BuiltinSymbolsBase(
                 generatorContext.irBuiltIns,
-                symbolTable,
+                generatorContext.moduleDescriptor.builtIns,
+                generatorContext.symbolTable.lazyWrapper
             )
 
             ExternalDependenciesGenerator(

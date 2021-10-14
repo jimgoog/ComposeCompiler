@@ -50,12 +50,12 @@ import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.types.classifierOrFail
 import org.jetbrains.kotlin.ir.types.classifierOrNull
 import org.jetbrains.kotlin.ir.types.isAny
-import org.jetbrains.kotlin.ir.types.isMarkedNullable
 import org.jetbrains.kotlin.ir.types.isNullable
 import org.jetbrains.kotlin.ir.types.isPrimitiveType
 import org.jetbrains.kotlin.ir.types.isString
 import org.jetbrains.kotlin.ir.types.isUnit
 import org.jetbrains.kotlin.ir.types.makeNotNull
+import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.fqNameForIrSerialization
 import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
 import org.jetbrains.kotlin.ir.util.getInlineClassUnderlyingType
@@ -184,9 +184,6 @@ fun Stability.normalize(): Stability {
                 }
             }
             is Stability.Runtime -> parts.add(stability)
-            is Stability.Unknown -> {
-                /* do nothing */
-            }
         }
     }
     return Stability.Combined(parts)
@@ -262,6 +259,7 @@ class StabilityInferencer(val context: IrPluginContext) {
         if (currentlyAnalyzing.contains(symbol)) return Stability.Unstable
         if (declaration.hasStableMarkedDescendant()) return Stability.Stable
         if (declaration.isEnumClass || declaration.isEnumEntry) return Stability.Stable
+        if (declaration.defaultType.isPrimitiveType()) return Stability.Stable
 
         val analyzing = currentlyAnalyzing + symbol
 
@@ -436,7 +434,7 @@ class StabilityInferencer(val context: IrPluginContext) {
         return when (expr) {
             is IrConst<*> -> Stability.Stable
             is IrGetObjectValue ->
-                if (expr.symbol.owner.superTypes.any { stabilityOf(it).knownStable() })
+                if (stabilityOf(expr.symbol.owner).knownStable())
                     Stability.Stable
                 else
                     Stability.Unstable
@@ -462,32 +460,13 @@ class StabilityInferencer(val context: IrPluginContext) {
     }
 }
 
-/**
- * Returns inline class for given class or null of type is not inlined
- * TODO: Make this configurable for different backends (currently implements logic of JS BE)
- */
-// From Kotin's InlineClasses.kt
 private fun IrType.getInlinedClass(): IrClass? {
-    if (this is IrSimpleType) {
-        val erased = erase(this) ?: return null
-        if (erased.isInline) {
-            if (this.isMarkedNullable()) {
-                var fieldType: IrType
-                var fieldInlinedClass = erased
-                while (true) {
-                    fieldType = getInlineClassUnderlyingType(fieldInlinedClass)
-                    if (fieldType.isMarkedNullable()) {
-                        return null
-                    }
-
-                    fieldInlinedClass = fieldType.getInlinedClass() ?: break
-                }
-            }
-
-            return erased
-        }
+    val erased = erase(this) ?: return null
+    if (this is IrSimpleType && erased.isInline) {
+        val fieldType = getInlineClassUnderlyingType(erased)
+        return fieldType.getInlinedClass()
     }
-    return null
+    return erased
 }
 
 // From Kotin's InlineClasses.kt

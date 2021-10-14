@@ -2,6 +2,7 @@ pluginManagement {
     repositories {
         repositories {
             maven { url("/Users/jsproch/kotlin-teams/mavenout") }
+            maven { url("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap/") }
             mavenCentral()
             maven { url("https://plugins.gradle.org/m2/") }
             google()
